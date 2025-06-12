@@ -16,25 +16,50 @@ class UserProfile
 
     public function __construct()
     {
-        $this->ownerID = $_SESSION['id'];
+        $this->ownerID = $_SESSION['user_id'] ?? $_SESSION['id'] ?? null;
+        if (!$this->ownerID) {
+            throw new \Exception('User ID not found in session');
+        }
         $this->con = DB::getInstance();
 
         $this->userImage = isset($_FILES['profile-pic']) ? $_FILES['profile-pic'] : "";
 
-        $this->name = isset($_POST['name']) ? ucwords(strtolower($_POST['name'])) : $this->getUserDetails()->fetch_object()->name;
-
-        $this->phoneNumber = isset($_POST['phone-number']) ? $_POST['phone-number'] : $this->getUserDetails()->fetch_object()->phone;
-
-        $this->email = isset($_POST['email-address']) ? strtolower($_POST['email-address']) : $this->getUserDetails()->fetch_object()->email;
+        $userDetails = $this->getUserDetails();
+        if ($userDetails && $user = $userDetails->fetch_object()) {
+            $this->name = isset($_POST['name']) ? ucwords(strtolower($_POST['name'])) : $user->name;
+            $this->phoneNumber = isset($_POST['phone-number']) ? $_POST['phone-number'] : $user->phone;
+            $this->email = isset($_POST['email-address']) ? strtolower($_POST['email-address']) : $user->email;
+        } else {
+            $this->name = isset($_POST['name']) ? ucwords(strtolower($_POST['name'])) : '';
+            $this->phoneNumber = isset($_POST['phone-number']) ? $_POST['phone-number'] : '';
+            $this->email = isset($_POST['email-address']) ? strtolower($_POST['email-address']) : '';
+        }
 
         $this->password = isset($_POST['change-password']) ? password_hash($_POST['change-password'], PASSWORD_DEFAULT) : null;
     }
 
+    public function getUserProfile()
+    {
+        try {
+            $result = $this->con->select("*", "users", "WHERE id = ?", $this->ownerID);
+            if ($result && $user = $result->fetch_object()) {
+                return $user;
+            }
+            return null;
+        } catch (\Exception $e) {
+            error_log("Error getting user profile: " . $e->getMessage());
+            return null;
+        }
+    }
+
     public function getUserDetails()
     {
-        $userDetails = $this->con->select("*", "landlords", "WHERE id = ?", $this->ownerID);
-
-        return $userDetails;
+        try {
+            return $this->con->select("*", "users", "WHERE id = ?", $this->ownerID);
+        } catch (\Exception $e) {
+            error_log("Error getting user details: " . $e->getMessage());
+            return null;
+        }
     }
 
     public function getUserEmail()
@@ -64,7 +89,6 @@ class UserProfile
     public function updateUserDetails()
     {
         if (isset($_POST['update-details'])) {
-
             $params = [];
 
             // Check if a name was entered and adds it to the array
@@ -82,7 +106,6 @@ class UserProfile
                 // Checks if the entered email is a valid one and displays the appropriate feedback
                 if (!filter_var($this->getUserEmail(), FILTER_VALIDATE_EMAIL)) {
                     displayMessage("Invalid email format. Please use a valid email.", "text-rose-500");
-
                     return;
                 } else {
                     array_push($params, $this->getUserEmail());
@@ -94,23 +117,20 @@ class UserProfile
                 $this->getUserPhoneNumber(),
                 $this->getUserEmail(),
             ];
-            $checkIfUserExists = $this->con->select("phone, email", "landlords", "WHERE phone = ? OR email = ?", ...$userCheckParams);
+            $checkIfUserExists = $this->con->select("phone, email", "users", "WHERE phone = ? OR email = ?", ...$userCheckParams);
 
             if ($checkIfUserExists->num_rows > 0) {
                 $userExists = $checkIfUserExists->fetch_object();
 
                 if ($userExists->phone === $this->getUserPhoneNumber() && $userExists->email === $this->getUserEmail()) {
                     displayMessage("<span class='font-bold'>Phone Number and Email</span> already exists.", "text-rose-500");
-
                     return;
                 } else if ($userExists->email === $this->getUserEmail()) {
                     displayMessage("<span class='font-bold'>Email</span> is already taken. Please use another one.", "text-rose-500");
-
                     return;
                 } else {
                     if ($userExists->phone === $this->getUserPhoneNumber()) {
                         displayMessage("This <span class='font-bold'>Phone Number</span> already exists.", "text-rose-500");
-
                         return;
                     }
                 }
@@ -122,26 +142,26 @@ class UserProfile
             }
 
             if (in_array($this->getUserName(), $params)) {
-                $this->con->update("landlords", "name = ?", "WHERE id = ?", ...[$this->getUserName(), $this->ownerID]);
+                $this->con->update("users", "name = ?", "WHERE id = ?", ...[$this->getUserName(), $this->ownerID]);
             }
 
             if (in_array($this->getUserPhoneNumber(), $params)) {
-                $this->con->update("landlords", "phone = ?", "WHERE id = ?", ...[$this->getUserPhoneNumber(), $this->ownerID]);
+                $this->con->update("users", "phone = ?", "WHERE id = ?", ...[$this->getUserPhoneNumber(), $this->ownerID]);
             }
 
             if (in_array($this->getUserEmail(), $params)) {
-                $this->con->update("landlords", "email = ?", "WHERE id = ?", ...[$this->getUserEmail(), $this->ownerID]);
+                $this->con->update("users", "email = ?", "WHERE id = ?", ...[$this->getUserEmail(), $this->ownerID]);
             }
 
             if (in_array($this->getUserPassword(), $params)) {
-                $this->con->update("landlords", "password = ?", "WHERE id = ?", ...[$this->getUserPassword(), $this->ownerID]);
+                $this->con->update("users", "password = ?", "WHERE id = ?", ...[$this->getUserPassword(), $this->ownerID]);
             }
 
             $_SESSION['user'] = $this->getUserName();
 
             displayMessage("Profile updated successfully.", "text-emerald-500");
 
-            header("Refresh: 3, ../admin/settings", true, 301);
+            header("Refresh: 3, ../agent/settings", true, 301);
         } else {
             displayMessage("View and edit your profile information");
         }
@@ -163,18 +183,18 @@ class UserProfile
         ];
 
         if (isset($_POST["change-profile-pic"])) {
-
             // Check if a new image was selected
-            if ($this->getUserDetails()->fetch_object()->profile_pic === strtolower($this->userImage['name'])) {
-                displayMessage("No new image was selected.", "text-rose-500");
-
-                return;
+            $userDetails = $this->getUserDetails();
+            if ($userDetails && $user = $userDetails->fetch_object()) {
+                if ($user->profile_pic === strtolower($this->userImage['name'])) {
+                    displayMessage("No new image was selected.", "text-rose-500");
+                    return;
+                }
             }
 
             // Check if the file extension is a valid image extension
             if (!in_array(pathinfo($this->userImage["name"], PATHINFO_EXTENSION), $allowedExtensions)) {
                 displayMessage("Invalid image extension. Please select a valid image with either a png, jpg, jpeg, gif, jfif, or webp extension.", "text-rose-500");
-
                 return;
             }
 
@@ -190,11 +210,10 @@ class UserProfile
                     $this->ownerID
                 ];
 
-                $this->con->update("landlords", "profile_pic = ?", "WHERE id = ?", ...$params);
-
+                $this->con->update("users", "profile_pic = ?", "WHERE id = ?", ...$params);
                 displayMessage("Profile picture updated successfully.", "text-emerald-500");
-
-                header("Refresh: 3, ../admin/settings", true, 301);
+            } else {
+                displayMessage("Failed to upload profile picture.", "text-rose-500");
             }
         }
     }

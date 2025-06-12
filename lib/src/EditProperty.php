@@ -34,7 +34,7 @@ class EditProperty
 
     private function getHouseDetails()
     {
-        return $this->con->select("id, index_img, img_1, img_2, img_3, img_4, img_5, title, price, description, location, type, owner_id, summary", "properties", "WHERE id = ? AND link = ? AND owner_id = ?", ...[$this->propertyID, $this->getPropertyName, $this->ownerID]);
+        return $this->con->select("id, index_img, img_1, img_2, img_3, img_4, img_5, title, price, description, location, type, summary", "properties JOIN property_landlords ON properties.id = property_landlords.property_id", "WHERE properties.id = ? AND link = ? AND property_landlords.user_id = ?", ...[$this->propertyID, $this->getPropertyName, $this->ownerID]);
     }
 
     // Sets the banner image field of the form
@@ -256,167 +256,55 @@ class EditProperty
      */
     public function editProperty()
     {
+        $this->setPropertyName = isset($_POST['property-name']) ? strtolower(trim(strip_tags($_POST['property-name']))) : '';
+        $this->propertyLocation = isset($_POST['property-location']) ? ucwords(trim(strip_tags($_POST['property-location']))) : '';
+        $this->propertyPrice = isset($_POST['property-price']) ? (int) (trim(strip_tags($_POST['property-price']))) : '';
+        $this->propertyCategory = isset($_POST['property-category']) ? trim(strip_tags($_POST['property-category'])) : '';
+        $this->propertySummary = isset($_POST['property-summary']) ? ucfirst(trim(strip_tags($_POST['property-summary']))) : '';
+        $this->propertyDescription = isset($_POST['property-description']) ? ucfirst(trim(strip_tags($_POST['property-description']))) : '';
+
         if (isset($_POST['edit-property'])) {
-            $uploadFolder = "../assets/img/";
-            $selectedImages = [];
-            $renamedImages = [];
-            $allowedExtensions = [
-                "png",
-                "jpeg",
-                "jpg",
-                "webp",
-                "jfif",
-                "gif"
-            ];
-
-            $this->propertyName = ucwords(strtolower(trim(strip_tags($_POST['property-name']))));
-
-            $this->propertyLocation = ucwords(strtolower(trim(strip_tags($_POST['property-location']))));
-
-            $this->propertyPrice = strtolower(trim(strip_tags($_POST['property-price'])));
-
-            $this->propertyCategory = ucwords(strtolower(trim(strip_tags($_POST['property-category']))));
-
-            $this->propertySummary = ucfirst(trim($_POST['property-summary']));
-
-            $this->propertyDescription = ucfirst(trim($_POST['property-description']));
-
-            // Get all fields and check if they are empty
-            $fields = [
-                $this->propertyName,
-                $this->propertyLocation,
-                $this->propertyPrice,
-                $this->propertyCategory,
-                $this->propertySummary,
-                $this->propertyDescription,
-            ];
-            foreach ($fields as $field) {
-                if (is_empty($field)) {
-                    displayMessage("All fields are required.", "text-rose-500");
+            if (is_empty($this->setPropertyName) || is_empty($this->setPropertyLocation) || is_empty($this->setPropertyPrice) || is_empty($this->setPropertyCategory) || is_empty($this->setPropertySummary) || is_empty($this->setPropertyDescription)) {
+                displayMessage("All fields are required.");
 
                     return;
-                }
-            }
-
-            $propertyLink = strtolower(str_replace(' ', '-', $this->propertyName));
+            } else {
             $updatedFields = [
-                ...$fields,
-                $propertyLink,
-                $this->propertyID,
-                $this->getPropertyName,
-                $this->ownerID
-            ];
+                    "title" => $this->setPropertyName,
+                    "location" => $this->setPropertyLocation,
+                    "price" => $this->setPropertyPrice,
+                    "type" => $this->setPropertyCategory,
+                    "summary" => $this->setPropertySummary,
+                    "description" => $this->setPropertyDescription
+                ];
 
-            $this->con->update("properties", "title = ?, location = ?, price = ?, type = ?, summary = ?, description = ?, link = ?", "WHERE id = ? AND link = ? AND owner_id = ?", ...$updatedFields);
+                $setClause = [];
+                $params = [];
+                foreach ($updatedFields as $column => $value) {
+                    $setClause[] = "`{$column}` = ?";
+                    $params[] = $value;
+                }
 
-            // Get all images names
-            $imagesNames = [
-                isset($this->setBannerImage()['name']) ? $this->setBannerImage()['name'] : $this->getHouseDetails()->fetch_object()->index_img,
+                $sql = "UPDATE `properties` JOIN `property_landlords` ON properties.id = property_landlords.property_id SET " . implode(", ", $setClause) . " WHERE properties.id = ? AND link = ? AND property_landlords.user_id = ?";
+                $params[] = $this->propertyID;
+                $params[] = $this->getPropertyName;
+                $params[] = $this->ownerID;
 
-                isset($this->setDetailsOnePic()['name']) ? $this->setDetailsOnePic()['name'] : $this->getHouseDetails()->fetch_object()->img_1,
-
-                isset($this->setDetailsTwoPic()['name']) ? $this->setDetailsTwoPic()['name'] : $this->getHouseDetails()->fetch_object()->img_2,
-
-                isset($this->setDetailsThreePic()['name']) ? $this->setDetailsThreePic()['name'] : $this->getHouseDetails()->fetch_object()->img_3,
-
-                isset($this->setDetailsFourPic()['name']) ? $this->setDetailsFourPic()['name'] : $this->getHouseDetails()->fetch_object()->img_4,
-
-                isset($this->setDetailsFivePic()['name']) ? $this->setDetailsFivePic()['name'] : $this->getHouseDetails()->fetch_object()->img_5,
-            ];
-
-            // Get the temp name of the images
-            $imagesTempNames = [
-                $this->setBannerImage()['tmp_name'],
-                $this->setDetailsOnePic()['tmp_name'],
-                $this->setDetailsTwoPic()['tmp_name'],
-                $this->setDetailsThreePic()['tmp_name'],
-                $this->setDetailsFourPic()['tmp_name'],
-                $this->setDetailsFivePic()['tmp_name'],
-            ];
-
-            // Get all selected images and adds them to an array
-            foreach ($imagesNames as $images) {
-                if (!is_empty($images)) {
-                    array_push($selectedImages, $images);
+                if ($this->con->prepare($sql, str_repeat("s", count($params)), ...$params)) {
+                    displayMessage("Property updated successfully!", "success");
+                } else {
+                    displayMessage("Failed to update property.");
                 }
             }
+        }
+    }
 
-            // Check if the file extension is a valid image extension
-            foreach ($selectedImages as $image) {
-                if (!in_array(pathinfo($image, PATHINFO_EXTENSION), $allowedExtensions)) {
-                    displayMessage("Invalid image extension. Please select a valid image with either a png, jpg, jpeg, or webp extension.", "text-rose-500");
-
-                    return;
-                }
-            }
-
-            // Rename the images, uploads it and then insert the values from the form.
-            $propertyName = strtolower(str_replace(' ', '-', $this->propertyName));
-
-            foreach ($selectedImages as $images) {
-                foreach ($imagesTempNames as $key => $tempName) {
-                    $imageName = $propertyName . '-' . str_replace(' ', '-', strtolower(str_replace(" ", "-", $_SESSION['user']))) . '-' . $_SESSION['id'] . '-' . strtolower(str_replace(" ", "-", date('l F Y'))) . '-' . $key . '.jpg';
-
-                    $imageFullPath = $uploadFolder . $imageName;
-
-                    move_uploaded_file($tempName, $imageFullPath);
-                }
-            }
-
-            foreach ($imagesTempNames as $key => $tempName) {
-                if (!is_empty($tempName)) {
-                    $imageName = $propertyName . '-' . str_replace(' ', '-', strtolower(str_replace(" ", "-", $_SESSION['user']))) . '-' . $_SESSION['id'] . '-' . strtolower(str_replace(
-                        " ",
-                        "-",
-                        date('l F Y')
-                    )) . '-' . $key . '.jpg';
-
-                    array_push($renamedImages, $imageName);
-                }
-            }
-
-            // Count the number of selected images. If it is more than 0, get the end number of the selected images (0-5), and update the names of the images based on the number (0 for banner image, 1 for image 1, etc)
-            if (count($renamedImages) > 0) {
-                foreach ($renamedImages as $image) {
-                    $currentImage = explode('-', $image);
-                    $currentImage = $currentImage[array_key_last($currentImage)];
-                    $currentImage = explode('.', $currentImage);
-                    $currentImageIndex = $currentImage[array_key_first($currentImage)];
-
-                    // Change the type of $currentImageIndex to integer so as to enable strict type checking
-                    settype($currentImageIndex, 'integer');
-
-                    if ($currentImageIndex === 0) {
-                        $this->con->update("properties", "index_img = ?", "WHERE id = ? AND link = ? AND owner_id = ?", ...[$image, $this->propertyID, $this->getPropertyName, $this->ownerID]);
-                    }
-
-                    if ($currentImageIndex === 1) {
-                        $this->con->update("properties", "img_1 = ?", "WHERE id = ? AND link = ? AND owner_id = ?", ...[$image,  $this->propertyID, $this->getPropertyName, $this->ownerID]);
-                    }
-
-                    if ($currentImageIndex === 2) {
-                        $this->con->update("properties", "img_2 = ?", "WHERE id = ? AND link = ? AND owner_id = ?", ...[$image, $this->propertyID, $this->getPropertyName, $this->ownerID]);
-                    }
-
-                    if ($currentImageIndex === 3) {
-                        $this->con->update("properties", "img_3 = ?", "WHERE id = ? AND link = ? AND owner_id = ?", ...[$image, $this->propertyID, $this->getPropertyName, $this->ownerID]);
-                    }
-
-                    if ($currentImageIndex === 4) {
-                        $this->con->update("properties", "img_4 = ?", "WHERE id = ? AND link = ? AND owner_id = ?", ...[$image, $this->propertyID, $this->getPropertyName, $this->ownerID]);
-                    }
-
-                    if ($currentImageIndex === 5) {
-                        $this->con->update("properties", "img_5 = ?", "WHERE id = ? AND link = ? AND owner_id = ?", ...[$image, $this->propertyID, $this->getPropertyName, $this->ownerID]);
-                    }
-                }
-            }
-
-            displayMessage("Property updated successfully", "text-green-500");
-
-            header("Refresh: 3, /admin/view-property", true, 301);
+    public function updatePropertyImage(string $image, string $imageColumnName) {
+        $sql = "UPDATE `properties` JOIN `property_landlords` ON properties.id = property_landlords.property_id SET `{$imageColumnName}` = ? WHERE properties.id = ? AND link = ? AND property_landlords.user_id = ?";
+        if ($this->con->prepare($sql, "ssss", $image, $this->propertyID, $this->getPropertyName, $this->ownerID)) {
+            displayMessage("Image updated successfully!", "success");
         } else {
-            displayMessage("Edit Property");
+            displayMessage("Failed to update image.");
         }
     }
 }

@@ -1,6 +1,8 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 ob_start();
-session_start();
 
 /**
  * Requires a specified page
@@ -8,23 +10,14 @@ session_start();
  */
 function view(string $fileName)
 {
-    $fileFullPath = "./lib/pages/{$fileName}.php";
+    $fileFullPath = __DIR__ . "/pages/{$fileName}.php";
 
     if (file_exists($fileFullPath)) {
         require_once($fileFullPath);
     } else {
-        header("Location: ./404");
+        header("Location: /uzoca/404");
+        exit;
     }
-}
-
-/**
- * Display a specified message with the specified format
- * @param string $message
- * @param string $class
- */
-function displayMessage(string $message, string $class = "", string $tag = "p")
-{
-    echo "<{$tag} class='{$class}'>{$message}</{$tag}>";
 }
 
 /**
@@ -39,4 +32,15 @@ function is_empty($field): bool
     } else {
         return false;
     }
+}
+
+/**
+ * Displays a message with optional styling
+ * @param string $message
+ * @param string $class
+ * @param string $tag
+ */
+function displayMessage(string $message, string $class = "", string $tag = "p"): void
+{
+    echo "<{$tag} class='{$class}'>{$message}</{$tag}>";
 }

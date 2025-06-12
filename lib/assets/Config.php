@@ -16,9 +16,9 @@ class Config
     protected static $config = [
         'mysql' => [
             'server'    =>  'localhost',
-            'host'      =>  'root',
+            'username'  =>  'root',
             'password'  =>  '',
-            'dbName'    =>  'housing-quest'
+            'dbName'    =>  'uzoca'
         ],
     ];
 

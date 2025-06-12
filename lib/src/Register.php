@@ -1,20 +1,38 @@
 <?php
 
-namespace app\src;
+namespace lib\src;
 
-use app\assets\DB;
+use PDO;
+use PDOException;
 
 class Register
 {
-    private $con;
+    private $conn;
     private $name;
     private $phoneNumber;
     private $email;
     private $password;
+    private $userType;
+    private $errors = [];
 
     public function __construct()
     {
-        $this->con = DB::getInstance();
+        $this->conn = $GLOBALS['conn'];
+        
+        // Start session if not already started
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+    }
+
+    // Function to validate password strength
+    private function isStrongPassword($password) {
+        // Password must be at least 8 characters long and contain at least one uppercase letter,
+        // one lowercase letter, and one number
+        return strlen($password) >= 8 &&
+               preg_match('/[A-Z]/', $password) &&
+               preg_match('/[a-z]/', $password) &&
+               preg_match('/[0-9]/', $password);
     }
 
     // Sets the name field of the form
@@ -26,7 +44,7 @@ class Register
     // Sets the phone number field of a form
     public function setPhoneNumber(): string
     {
-        return $this->phoneNumber = isset($_POST['phoneNumber']) ? trim(strip_tags($_POST['phoneNumber'])) : "";
+        return $this->phoneNumber = isset($_POST['phone']) ? trim(strip_tags($_POST['phone'])) : "";
     }
 
     // Sets the email field of a form
@@ -41,116 +59,99 @@ class Register
         return $this->password = isset($_POST['password']) ? password_hash($_POST['password'], PASSWORD_DEFAULT) : "";
     }
 
+    // Sets the user type field of a form
+    public function setUserType(): string
+    {
+        return $this->userType = isset($_POST['userType']) ? trim(strip_tags($_POST['userType'])) : "";
+    }
+
     public function registerUser()
     {
-        if (isset($_POST['submit'])) {
-
-            // Check if a name was entered and displays the appropriate feedback
-            if (is_empty($this->setName())) {
-                displayMessage("<span class='font-bold'>Name</span> field is required.", "text-rose-500");
-
-                return;
+        if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register-submit'])) {
+            // Validate name
+            if (empty($_POST['name'])) {
+                $this->errors[] = "Name is required";
             }
 
-            // Check if a phone number was entered and displays the appropriate feedback
-            if (is_empty($this->setPhoneNumber())) {
-                displayMessage("<span class='font-bold'>Phone Number</span> field is required.", "text-rose-500");
-
-                return;
+            // Validate phone
+            if (empty($_POST['phone'])) {
+                $this->errors[] = "Phone number is required";
+            } elseif (!preg_match("/^[0-9]{10}$/", $_POST['phone'])) {
+                $this->errors[] = "Phone number must be 10 digits";
             }
 
-            // Check if a email was entered and displays the appropriate feedback
-            if (is_empty($this->setEmail())) {
-                displayMessage("<span class='font-bold'>Email</span> field is required.", "text-rose-500");
-
-                return;
-            } else {
-                // Checks if the entered email is a valid one and displays the appropriate feedback
-                if (!filter_var($this->setEmail(), FILTER_VALIDATE_EMAIL)) {
-                    displayMessage("Invalid email format. Please use a valid email.", "text-rose-500");
-
-                    return;
-                }
+            // Validate email
+            if (empty($_POST['email'])) {
+                $this->errors[] = "Email is required";
+            } elseif (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
+                $this->errors[] = "Invalid email format";
             }
 
-            // Check if a password was entered and displays the appropriate feedback
-            if (is_empty($this->setPassword())) {
-                displayMessage("<span class='font-bold'>Password</span> field is required.", "text-rose-500");
-
-                return;
+            // Validate password
+            if (empty($_POST['password'])) {
+                $this->errors[] = "Password is required";
+            } elseif (!$this->isStrongPassword($_POST['password'])) {
+                $this->errors[] = "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number";
             }
 
-            $params = [
-                $this->setName(),
-                $this->setPhoneNumber(),
-                $this->setEmail(),
-                $this->setPassword(),
-            ];
+            // Validate user type
+            if (empty($_POST['userType'])) {
+                $this->errors[] = "User type is required";
+            } elseif (!in_array($_POST['userType'], ['agent', 'landlord'])) {
+                $this->errors[] = "Invalid user type";
+            }
 
-            // Params to check if the choosen phone number or email already exists and give appropriate feedback
-            $userCheckParams = [
-                $this->setPhoneNumber(),
-                $this->setEmail(),
-            ];
-            $checkIfUserExists = $this->con->select("phone, email", "landlords", "WHERE phone = ? OR email = ?", ...$userCheckParams);
+            // Validate password confirmation
+            if (empty($_POST['password-confirm'])) {
+                $this->errors[] = "Please confirm your password";
+            } elseif ($_POST['password'] !== $_POST['password-confirm']) {
+                $this->errors[] = "Passwords do not match";
+            }
 
-            if ($checkIfUserExists->num_rows > 0) {
-                $userExists = $checkIfUserExists->fetch_object();
-
-                if ($userExists->phone === $this->setPhoneNumber() && $userExists->email === $this->setEmail()) {
-                    displayMessage("<span class='font-bold'>Phone Number and Email</span> already exists.", "text-rose-500");
-
-                    return;
-                } else if ($userExists->email === $this->setEmail()) {
-                    displayMessage("<span class='font-bold'>Email</span> is already taken. Please use another one.", "text-rose-500");
-
-                    return;
-                } else {
-                    if ($userExists->phone === $this->setPhoneNumber()) {
-                        displayMessage("This <span class='font-bold'>Phone Number</span> already exists.", "text-rose-500");
-
-                        return;
+            // If there are no errors, proceed with registration
+            if (empty($this->errors)) {
+                try {
+                    // Check if email already exists
+                    $stmt = $this->conn->prepare("SELECT id FROM users WHERE email = ?");
+                    $stmt->execute([$_POST['email']]);
+                    if ($stmt->rowCount() > 0) {
+                        $this->errors[] = "Email already exists";
+                        return $this->formatErrors();
                     }
+
+                    // Hash password
+                    $hashedPassword = password_hash($_POST['password'], PASSWORD_DEFAULT);
+
+                    // Insert new user
+                    $stmt = $this->conn->prepare("INSERT INTO users (name, email, phone, password, role, created_at) VALUES (?, ?, ?, ?, ?, NOW())");
+                    $stmt->execute([
+                        $_POST['name'],
+                        $_POST['email'],
+                        $_POST['phone'],
+                        $hashedPassword,
+                        $_POST['userType']
+                    ]);
+
+                    // Clear any existing errors
+                    $this->errors = [];
+
+                    return "Registration successful! You can now log in with your credentials.";
+                } catch (PDOException $e) {
+                    error_log("Registration error: " . $e->getMessage());
+                    $this->errors[] = "Registration failed. Please try again.";
+                    return $this->formatErrors();
                 }
             }
 
-            $this->con->insert("landlords", ["name", "phone", "email", "password"], ...$params);
-
-            $setUserSession = $this->con->select("name, id", "landlords", "WHERE phone = ? OR email = ?", ...$userCheckParams)->fetch_object();
-
-            $_SESSION['user'] = $setUserSession->name;
-            $_SESSION['id'] = $setUserSession->id;
-            $_SESSION['loggedUser'] = strtolower($setUserSession->name . $setUserSession->id);
-
-            // Send a welcome mail to the newly registered user
-            $receipientMail = $this->setEmail();
-            $subject = "Registration Successful";
-            $messageBody = wordwrap("Registration was successful. Enjoy the HousingQuest platform from all of us at HousingQuest.", 70);
-            $message = "
-                <html>
-                <head>
-                    <title>Registration Successful</title>
-                </head>
-                <body>
-                    <p>
-                        {$messageBody}
-                    </p>
-                </body>
-                </html>
-            ";
-            $headers = "MIME-Version: 1.0" . "\r\n";
-            $headers .= "Content-type: text/html; charset=UTF-8" . "\r\n";
-            $headers .= "From: Wisdom Ojimah ojimahwisdom@gmail.com";
-
-            if (mail($receipientMail, $subject, $message, $headers)) {
-                displayMessage("Registration successful. You would be redirected to your dashboard shortly. Please check your mail for a confirmation message. If you can't find the mail please check your spam or trash folder.", "text-green-500");
-            } else {
-                displayMessage("Registration successful. You would be redirected to your dashboard shortly.", "text-green-500");
-            }
-
-            header("Refresh: 3, /admin", true, 301);
-        } else {
-            displayMessage("Create a free account today");
+            return $this->formatErrors();
         }
+        return "";
+    }
+
+    private function formatErrors() {
+        if (empty($this->errors)) {
+            return "";
+        }
+        return "<ul class='list-disc list-inside'><li>" . implode("</li><li>", $this->errors) . "</li></ul>";
     }
 }

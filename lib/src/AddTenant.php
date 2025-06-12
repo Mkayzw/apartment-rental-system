@@ -34,7 +34,7 @@ class AddTenant
     public function getProperties()
     {
 
-        $properties = $this->con->select("id, title, owner_id", "properties", "WHERE owner_id = ? AND status = 'available' ORDER BY id DESC", $this->ownerID);
+        $properties = $this->con->select("properties.id, properties.title", "properties JOIN property_landlords ON properties.id = property_landlords.property_id", "WHERE property_landlords.user_id = ? AND status = 'available' ORDER BY properties.id DESC", $this->ownerID);
 
         return $properties;
     }
@@ -68,15 +68,15 @@ class AddTenant
             }
 
             if (!filter_var($this->userEmail, FILTER_VALIDATE_EMAIL)) {
-                displayMessage("Invalid email address. Please <a class='text-sky-500 hover:underline focus:underline underline-offset-[7px]' href='/admin/add-tenant'>try again</a> using a valid email", "header text-xl text-center mb-4 lg:col-span-12 text-rose-500 dark:text-rose-500");
+                displayMessage("Invalid email address. Please <a class='text-sky-500 hover:underline focus:underline underline-offset-[7px]' href='/uzoca/admin/add-tenant'>try again</a> using a valid email", "header text-xl text-center mb-4 lg:col-span-12 text-rose-500 dark:text-rose-500");
 
                 return;
             }
 
-            $getSpecificID = $this->con->select("id", "properties", "WHERE title = ? AND owner_id = ? AND status = 'available'", ...[$this->propertyBought, $this->ownerID])->fetch_object()->id;
+            $getSpecificID = $this->con->select("properties.id", "properties JOIN property_landlords ON properties.id = property_landlords.property_id", "WHERE properties.title = ? AND property_landlords.user_id = ? AND properties.status = 'available'", ...[$this->propertyBought, $this->ownerID])->fetch_object()->id;
 
             // Get the email of the property owner
-            $getPropertyOwnerEmail = $this->con->select("email", "landlords", "JOIN properties ON landlords.id = properties.owner_id WHERE title = ? AND owner_id = ? AND status = 'available'", ...[$this->propertyBought, $this->ownerID])->fetch_object()->email;
+            $getPropertyOwnerEmail = $this->con->select("users.email", "users JOIN property_landlords ON users.id = property_landlords.user_id JOIN properties ON property_landlords.property_id = properties.id", "WHERE properties.title = ? AND property_landlords.user_id = ? AND properties.status = 'available'", ...[$this->propertyBought, $this->ownerID])->fetch_object()->email;
 
             // Send a confirmation mail and then update the records accordingly
             $subject = "Property Allocation Successful";
@@ -135,7 +135,7 @@ class AddTenant
             $headers .= "From: {$_SESSION['user']} {$getPropertyOwnerEmail}";
 
             if (mail($this->userEmail, $subject, $message, $headers)) {
-                $addTenant = $this->con->insert("tenants", ["tenant_name", "agreement_date", "property_bought", "property_id", "landlord"], ...[$this->tenantName, $this->agreementDate, $this->propertyBought, $getSpecificID, $this->ownerID]);
+                $addTenant = $this->con->insert("tenants", ["tenant_name", "agreement_date", "property_bought", "property_id"], ...[$this->tenantName, $this->agreementDate, $this->propertyBought, $getSpecificID]);
 
                 $tenantID = $this->con->lastID();
 
@@ -145,7 +145,7 @@ class AddTenant
 
                 displayMessage("Tenant added successfully.", "text-green-500 header text-xl text-center mb-4 lg:col-span-12 dark:text-green-500");
 
-                header("Refresh: 3, /admin/tenants", true, 301);
+                header("Refresh: 3, /uzoca/admin/tenants", true, 301);
             } else {
                 displayMessage("There was an error completing this operation. Please <a class='text-sky-500 hover:underline focus:underline underline-offset-[7px]' href='/admin/add-tenant'>try again</a>", "header text-xl text-center mb-4 lg:col-span-12 text-rose-500 dark:text-rose-500");
             }

@@ -1,4 +1,4 @@
-<?php $pageTitle = "HousingQuest | View Property Details"; ?>
+<?php $pageTitle = "UZOCA | View Property Details"; ?>
 <?php require_once("./includes/Header.php"); ?>
 <?php
 
@@ -8,7 +8,7 @@ $house = new AdminViewProperty();
 ?>
 
 <div class="flex items-center gap-x-4 gap-y-2 justify-between flex-wrap">
-    <a class="text-sky-500 hover:text-sky-600 focus:text-sky-600 dark:text-sky-600 dark:hover:text-sky-700" href="/admin/properties">
+    <a class="text-sky-500 hover:text-sky-600 focus:text-sky-600 dark:text-sky-600 dark:hover:text-sky-700" href="/uzoca/admin/properties">
         <i class="fr fi-rr-arrow-small-left"></i>
         Go back
     </a>

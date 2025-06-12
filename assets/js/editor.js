@@ -1,14 +1,39 @@
-function createEditor (id) {
+function createEditor(elementId) {
 	ClassicEditor
-		.create(document.querySelector(`#${id}`), {
+		.create(document.querySelector('#' + elementId), {
 			toolbar: {
-				shouldNotGroupWhenFull: true,
+				items: [
+					'heading',
+					'|',
+					'bold',
+					'italic',
+					'link',
+					'bulletedList',
+					'numberedList',
+					'|',
+					'outdent',
+					'indent',
+					'|',
+					'blockQuote',
+					'insertTable',
+					'undo',
+					'redo'
+				]
 			},
+			language: 'en',
+			table: {
+				contentToolbar: [
+					'tableColumn',
+					'tableRow',
+					'mergeTableCells'
+				]
+			},
+			licenseKey: '',
 		})
 		.then(editor => {
 			window.editor = editor;
 		})
-		.catch(err => {
-			console.error(err.stack);
+		.catch(error => {
+			console.error(error);
 		});
 }

@@ -1,3 +1,10 @@
+<?php
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,62 +12,79 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= isset($pageTitle) ? $pageTitle : "HousingQuest | Home" ?></title>
-    <link rel="icon" href="./assets/img/logo-light.png">
+    <title><?= isset($pageTitle) ? $pageTitle : "UZOCA | Home" ?></title>
+    <link rel="icon" href="/uzoca/assets/img/logo-light.png">
 
     <!-- Preload stylesheets and JavaScript files -->
-    <link rel="preload" href="./assets/css/style.css" as="style">
-    <link rel="preload" href="./assets/fonts/fonts.min.css" as="style">
-    <link rel="preload" href="./assets/icons/uicons-brands/css/uicons-brands.min.css" as="style">
-    <link rel="preload" href="./assets/icons/uicons-regular-rounded/css/uicons-regular-rounded.min.css" as="style">
-    <link rel="preload" href="./assets/js/main.min.js" as="script">
+    <link rel="preload" href="/uzoca/assets/css/style.css" as="style">
+    <link rel="preload" href="/uzoca/assets/fonts/fonts.min.css" as="style">
+    <link rel="preload" href="/uzoca/assets/icons/uicons-brands/css/uicons-brands.min.css" as="style">
+    <link rel="preload" href="/uzoca/assets/icons/uicons-regular-rounded/css/uicons-regular-rounded.min.css" as="style">
+    <link rel="preload" href="/uzoca/assets/js/main.min.js" as="script">
 
     <!-- Important stylesheets -->
-    <link rel="stylesheet" href="./assets/css/style.css">
-    <link rel="stylesheet" href="./assets/fonts/fonts.min.css">
-    <link rel="stylesheet" href="./assets/icons/uicons-brands/css/uicons-brands.min.css">
-    <link rel="stylesheet" href="./assets/icons/uicons-regular-rounded/css/uicons-regular-rounded.min.css">
+    <link rel="stylesheet" href="/uzoca/assets/css/style.css">
+    <link rel="stylesheet" href="/uzoca/assets/fonts/fonts.min.css">
+    <link rel="stylesheet" href="/uzoca/assets/icons/uicons-brands/css/uicons-brands.min.css">
+    <link rel="stylesheet" href="/uzoca/assets/icons/uicons-regular-rounded/css/uicons-regular-rounded.min.css">
 </head>
 
 <body class="">
-
     <header>
-        <a href="/" aria-label="HousingQuest logo">
-            <img class="w-20 lg:w-24 logo" src="./assets/img/logo.png" alt="HousingQuest" width="100" height="100">
+        <a href="/uzoca" aria-label="UZOCA logo">
+            <img class="w-20 lg:w-24 logo" src="/uzoca/assets/img/logo.png" alt="UZOCA" width="100" height="100">
         </a>
 
         <nav class="scale-0 lg:scale-100">
             <ul class="flex flex-col gap-8 lg:gap-8 lg:flex-row">
                 <li>
-                    <a class="hover:text-sky-500" href="/">
+                    <a class="hover:text-sky-500" href="/uzoca">
                         <i class="fr fi-rr-home pr-1.5"></i>
                         Home
                     </a>
                 </li>
                 <li>
-                    <a class="hover:text-sky-500" href="/#about">
+                    <a class="hover:text-sky-500" href="/uzoca#about">
                         <i class="fr fi-rr-info pr-1.5"></i>
                         About Us
                     </a>
                 </li>
                 <li>
-                    <a class="hover:text-sky-500" href="/contact">
+                    <a class="hover:text-sky-500" href="/uzoca/contact">
                         <i class="fr fi-rr-envelope pr-1.5"></i>
                         Contact
                     </a>
                 </li>
+                <?php if (isset($_SESSION['user_id']) && isset($_SESSION['role'])): ?>
                 <li>
-                    <a class="hover:text-sky-500" href="/registration">
+                    <?php
+                    $dashboardUrl = match($_SESSION['role']) {
+                        'landlord' => '/uzoca/landlord/dashboard.php',
+                        'agent' => '/uzoca/agent/index.php',
+                        'admin' => '/uzoca/admin/index.php',
+                        'tenant' => '/uzoca/tenant/dashboard.php',
+                        default => '/uzoca/login.php'
+                    };
+                    ?>
+                    <a class="hover:text-sky-500" href="<?php echo $dashboardUrl; ?>">
+                        <i class="fr fi-rr-apps pr-1.5"></i>
+                        Return to Dashboard
+                    </a>
+                </li>
+                <?php else: ?>
+                <li>
+                    <a class="hover:text-sky-500" href="/uzoca/registration">
                         <i class="fr fi-rr-lock pr-1.5"></i>
                         Registration
                     </a>
                 </li>
                 <li>
-                    <a class="hover:text-sky-500" href="/login">
+                    <a class="hover:text-sky-500" href="/uzoca/login">
                         <i class="fr fi-rr-key pr-1.5"></i>
                         Login
                     </a>
                 </li>
+                <?php endif; ?>
             </ul>
         </nav>
 
@@ -78,7 +102,7 @@
             </button>
         </div>
 
-        <form class="min-h-screen left-0 right-0 top-0 lg:top-16 overscroll-contain fixed bottom-0 overflow-y-auto z-50 bg-white dark:bg-slate-800 scale-0 px-4 pt-20 pb-8 lg:pt-12 transition-transform duration-700 search-input-container ease-in" method="POST" action="/search">
+        <form class="min-h-screen left-0 right-0 top-0 lg:top-16 overscroll-contain fixed bottom-0 overflow-y-auto z-50 bg-white dark:bg-slate-800 scale-0 px-4 pt-20 pb-8 lg:pt-12 transition-transform duration-700 search-input-container ease-in" method="POST" action="/uzoca/search">
             <button class="border border-gray-200 inline-block rounded-lg px-2 py-1.5 absolute right-4 top-4 hover:bg-gray-200 hover:text-slate-800 lg:hidden searchbar-toggle" type="button" aria-label="Mobile search form togle button">
                 <i class="fr fi-rr-cross"></i>
             </button>

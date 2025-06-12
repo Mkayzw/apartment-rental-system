@@ -1,11 +1,16 @@
-<?php require_once("./includes/Header.php"); ?>
+<?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+require_once("./includes/Header.php"); ?>
 <?php
 
 use app\src\AdminIndex;
 use app\src\ViewTransactionHistory;
+use app\assets\DB;
 
 $adminIndex = new AdminIndex();
-$adminIndexHistory = new ViewTransactionHistory();
+$adminIndexHistory = new ViewTransactionHistory(DB::getInstance());
 ?>
 
 <div class="rounded-xl p-4 lg:p-8 lg:gap-8 space-y-4 bg-white dark:bg-slate-900 dark:text-slate-100">
@@ -19,7 +24,7 @@ $adminIndexHistory = new ViewTransactionHistory();
             Dear <?= $_SESSION['user'] ?>, to enjoy the full benefits of this platform, kindly click on the Add Property link below to advertise unlimited properties free.
         </p>
 
-        <a class="inline-block rounded-lg py-1.5 px-3 text-white bg-sky-500 hover:bg-sky-600 hover:ring-1 hover:ring-sky-500 ring-offset-2 active:ring-1 active:ring-sky-500 dark:ring-offset-slate-800" href="/admin/add-property">
+        <a class="inline-block rounded-lg py-1.5 px-3 text-white bg-sky-500 hover:bg-sky-600 hover:ring-1 hover:ring-sky-500 ring-offset-2 active:ring-1 active:ring-sky-500 dark:ring-offset-slate-800" href="/uzoca/admin/add-property">
             Add Property
         </a>
     </div>
@@ -64,7 +69,7 @@ $adminIndexHistory = new ViewTransactionHistory();
                 New Tenants
             </h2>
 
-            <a class="text-sky-500 hover:text-sky-600 focus:text-sky-600 dark:text-sky-600 dark:hover:text-sky-700" href="/admin/tenants">
+            <a class="text-sky-500 hover:text-sky-600 focus:text-sky-600 dark:text-sky-600 dark:hover:text-sky-700" href="/uzoca/admin/tenants">
                 See All
             </a>
         </div>
@@ -80,7 +85,7 @@ $adminIndexHistory = new ViewTransactionHistory();
                 Transaction History
             </h2>
 
-            <a class="text-sky-500 hover:text-sky-600 focus:text-sky-600 dark:text-sky-600 dark:hover:text-sky-700" href="/admin/payment-history">
+            <a class="text-sky-500 hover:text-sky-600 focus:text-sky-600 dark:text-sky-600 dark:hover:text-sky-700" href="/uzoca/admin/payment-history">
                 See All
             </a>
         </div>

@@ -2,17 +2,24 @@
 
 namespace app\src;
 
-use app\assets\DB;
+use app\config\Database;
+use PDO;
+use PDOException;
 
 class ForgotPassword
 {
-    private $con;
+    private $conn;
     private $phoneEmail;
-    private $password;
 
     public function __construct()
     {
-        $this->con = DB::getInstance();
+        try {
+            $database = new Database();
+            $this->conn = $database->getConnection();
+        } catch(PDOException $e) {
+            error_log("Database connection error: " . $e->getMessage());
+            throw new PDOException("Database connection failed");
+        }
     }
 
     // Sets the phone number or email field of the form
@@ -24,71 +31,85 @@ class ForgotPassword
     public function resetPassword()
     {
         if (isset($_POST['submit'])) {
-
-            // Check if a email or phone number was entered and displays the appropriate feedback
-            if (is_empty($this->setPhoneEmail())) {
-                displayMessage("text-rose-500", "<span class='font-bold'>Email or Phone Number</span> field is required.");
-
+            // Check if a email or phone number was entered
+            if (empty($this->setPhoneEmail())) {
+                displayMessage("<span class='font-bold'>Email or Phone Number</span> field is required.", "text-rose-500");
                 return;
             }
 
-            // Params to check if the choosen phone number or email exists and give appropriate feedback
-            $userCheckParams = [
-                $this->setPhoneEmail(),
-                $this->setPhoneEmail(),
-            ];
-            $checkIfUserExists = $this->con->select("phone, email", "landlords", "WHERE phone = ? OR email = ?", ...$userCheckParams);
+            try {
+                // Check if user exists in the users table
+                $query = "SELECT id, email, name FROM users WHERE phone = :phone_email OR email = :phone_email";
+                $stmt = $this->conn->prepare($query);
+                $stmt->bindParam(':phone_email', $this->phoneEmail);
+                $stmt->execute();
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if ($checkIfUserExists->num_rows < 1) {
-                displayMessage("Incorrect <span class='font-bold'>Phone Number or Email</span>.", "text-rose-500");
-
+                if (!$user) {
+                    displayMessage("No account found with that email or phone number.", "text-rose-500");
                 return;
-            } else {
-                $newPassword = random_int(10000, 99999);
+                }
+
+                // Generate new password
+                $newPassword = bin2hex(random_bytes(4)); // 8 characters
                 $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
 
-                $userCheckParams = [
-                    $hashedPassword,
-                    $this->setPhoneEmail(),
-                    $this->setPhoneEmail(),
-                ];
-
-                $this->con->update("landlords", "password = ?", "WHERE phone = ? OR email = ?", ...$userCheckParams);
-
-                $receipientMail = $checkIfUserExists->fetch_object()->email;
-                $subject = "Password Reset Successful";
+                // Update user's password
+                $updateQuery = "UPDATE users SET password = :password WHERE id = :user_id";
+                $updateStmt = $this->conn->prepare($updateQuery);
+                $updateStmt->bindParam(':password', $hashedPassword);
+                $updateStmt->bindParam(':user_id', $user['id']);
+                
+                if ($updateStmt->execute()) {
+                    // Prepare email content
+                    $to = $user['email'];
+                    $subject = "UZOCA - Password Reset";
                 $message = "
                     <html>
                         <head>
-                            <title>Password Reset Successful</title>
+                                <title>Password Reset</title>
                         </head>
                         <body>
-                            <p>
-                                Your password was currently reset.
-                            </p>
-                            <p>
-                                 Use <b>{$newPassword}</b> to access your portal.
-                            </p>
-                            <p>
-                                You can change this later in the settings section of your portal.
-                            </p>
+                                <p>Dear " . htmlspecialchars($user['name']) . ",</p>
+                                <p>Your password has been reset as requested.</p>
+                                <p>Your new password is: <strong>" . $newPassword . "</strong></p>
+                                <p>Please login with this password and change it immediately in your account settings.</p>
+                                <p>If you did not request this password reset, please contact support immediately.</p>
+                                <br>
+                                <p>Best regards,</p>
+                                <p>UZOCA Team</p>
                         </body>
                     </html>
                 ";
-                $message = wordwrap($message, 70);
-                $headers = "MIME-Version: 1.0" . "\r\n";
-                $headers .= "Content-type: text/html; charset=UTF-8" . "\r\n";
-                $headers .= "From: Wisdom Ojimah ojimahwisdom@gmail.com";
 
-                if (mail($receipientMail, $subject, $message, $headers)) {
-                    displayMessage("Password reset successfully. Please check your email for the new password. If you can't find the mail please check your spam or trash folder.", "text-green-500");
+                    // Email headers
+                    $headers = array(
+                        'MIME-Version' => '1.0',
+                        'Content-type' => 'text/html; charset=UTF-8',
+                        'From' => 'noreply@uzoca.com',
+                        'Reply-To' => 'support@uzoca.com'
+                    );
 
+                    // Send email
+                    if (@mail($to, $subject, $message, implode("\r\n", $headers))) {
+                        displayMessage("Password reset successful! Please check your email for the new password. If you can't find the email, please check your spam folder.", "text-green-500");
+                        // Clear the form
                     $this->phoneEmail = "";
-
-                    header("Refresh: 5, /login", false, 301);
+                        // Redirect after 5 seconds
+                        header("Refresh: 5; url=/uzoca/login.php");
+                    } else {
+                        $error = error_get_last();
+                        error_log("Failed to send password reset email to: " . $to . ". Error: " . ($error ? $error['message'] : 'Unknown error'));
+                        displayMessage("Your password has been reset to: " . $newPassword . ". Please save this password and change it after logging in.", "text-green-500");
+                        // Redirect after 10 seconds
+                        header("Refresh: 10; url=/uzoca/login.php");
+                    }
                 } else {
-                    displayMessage("Password reset failed. Please try again.", "text-rose-500");
+                    displayMessage("Failed to reset password. Please try again.", "text-rose-500");
                 }
+            } catch (PDOException $e) {
+                error_log("Password reset error: " . $e->getMessage());
+                displayMessage("An error occurred. Please try again later.", "text-rose-500");
             }
         } else {
             displayMessage("Reset your password");

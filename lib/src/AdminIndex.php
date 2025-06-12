@@ -11,7 +11,7 @@ class AdminIndex
 
     public function __construct()
     {
-        $this->ownerID = $_SESSION['id'];
+        $this->ownerID = $_SESSION['user_id'];
         $this->con = DB::getInstance();
     }
 
@@ -20,7 +20,7 @@ class AdminIndex
      */
     public function showPropertiesCount()
     {
-        $propertyCount = $this->con->select("id", "properties", "WHERE owner_id = ?", $this->ownerID)->num_rows;
+        $propertyCount = $this->con->select("properties.id", "properties JOIN property_landlords ON properties.id = property_landlords.property_id", "WHERE property_landlords.user_id = ?", $this->ownerID)->num_rows;
 
         if ($propertyCount < 1) : ?>
             <p class="font-bold">
@@ -45,7 +45,7 @@ class AdminIndex
      */
     public function showTenantsCount()
     {
-        $tenants = $this->con->select("id", "tenants", "WHERE landlord = ?", $this->ownerID)->num_rows;
+        $tenants = $this->con->select("tenants.id", "tenants JOIN properties ON tenants.property_id = properties.id JOIN property_landlords ON properties.id = property_landlords.property_id", "WHERE property_landlords.user_id = ?", $this->ownerID)->num_rows;
 
         if ($tenants < 1) : ?>
             <p class="font-bold">

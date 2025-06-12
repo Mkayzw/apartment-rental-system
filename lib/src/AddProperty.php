@@ -104,7 +104,6 @@ class AddProperty
     public function addNewProperty()
     {
         if (isset($_POST['add-property'])) {
-
             $uploadFolder = "../assets/img/";
             $renamedImages = [];
             $allowedExtensions = [
@@ -128,7 +127,6 @@ class AddProperty
             foreach ($fields as $field) {
                 if (is_empty($field)) {
                     displayMessage("All fields are required.", "text-rose-500");
-
                     return;
                 }
             }
@@ -157,7 +155,6 @@ class AddProperty
             foreach ($imagesNames as $images) {
                 if (is_empty($images)) {
                     displayMessage("All images are required.", "text-rose-500");
-
                     return;
                 }
             }
@@ -166,43 +163,103 @@ class AddProperty
             foreach ($imagesNames as $image) {
                 if (!in_array(pathinfo($image, PATHINFO_EXTENSION), $allowedExtensions)) {
                     displayMessage("Invalid image extension. Please select a valid image with either a png, jpg, jpeg, or webp extension.", "text-rose-500");
-
                     return;
                 }
             }
 
-            // Rename the images, uploads it and then insert the values from the form.
+            // Rename the images and prepare for upload
             $propertyName = strtolower(str_replace(' ', '-', $this->setPropertyName()));
+            $timestamp = time();
 
             foreach ($imagesNames as $key => $images) {
-                $imageName = $propertyName . '-' . str_replace(' ', '-', strtolower(str_replace(" ", "-", $_SESSION['user']))) . '-' . $_SESSION['id'] . '-' . strtolower(str_replace(" ", "-", date('l F Y'))) . '-' . $key . '.jpg';
-
+                $imageName = $propertyName . '-' . $timestamp . '-' . ($key + 1) . '.jpg';
                 array_push($renamedImages, $imageName);
             }
 
-            foreach ($imagesNames as $images) {
-                foreach ($imagesTempNames as $key => $tempName) {
-                    $imageName = $propertyName . '-' . str_replace(' ', '-', strtolower(str_replace(" ", "-", $_SESSION['user']))) . '-' . $_SESSION['id'] . '-' . strtolower(str_replace(" ", "-", date('l F Y'))) . '-' . $key . '.jpg';
+            // Upload images
+            foreach ($imagesTempNames as $key => $tempName) {
+                $imageName = $renamedImages[$key];
+                $imageFullPath = $uploadFolder . $imageName;
 
-                    $imageFullPath = $uploadFolder . $imageName;
-
-                    move_uploaded_file($tempName, $imageFullPath);
+                if (!move_uploaded_file($tempName, $imageFullPath)) {
+                    displayMessage("Failed to upload image " . ($key + 1) . ". Please try again.", "text-rose-500");
+                    return;
                 }
             }
 
+            // Create property link
             $propertyLink = strtolower(str_replace(' ', '-', $this->propertyName));
 
-            $propertyFields = [
-                ...$fields,
-                ...$renamedImages,
-                $_SESSION['id'],
-                $propertyLink
-            ];
+            try {
+                // Insert into properties table
+                $propertyColumns = [
+                    "owner_id",
+                    "title",
+                    "location",
+                    "price",
+                    "type",
+                    "summary",
+                    "description",
+                    "index_img",
+                    "img_1",
+                    "img_2",
+                    "img_3",
+                    "img_4",
+                    "img_5",
+                    "status"
+                ];
 
-            $this->con->insert("properties", ["title", "location", "price", "type", "summary", "description", "index_img", "img_1", "img_2", "img_3", "img_4", "img_5", "owner_id", "link"], ...$propertyFields);
+                $propertyValues = [
+                    $_SESSION['user_id'],
+                    $fields[0],
+                    $fields[1],
+                    $fields[2],
+                    $fields[3],
+                    $fields[4],
+                    $fields[5],
+                    $renamedImages[0],
+                    $renamedImages[1],
+                    $renamedImages[2],
+                    $renamedImages[3],
+                    $renamedImages[4],
+                    $renamedImages[5],
+                    "available"
+                ];
 
-            displayMessage("Property added successfully.", "text-emerald-500");
-            header("Refresh: 2, /admin/properties", true, 301);
+                // Create placeholders for the SQL query
+                $placeholders = str_repeat('?,', count($propertyColumns) - 1) . '?';
+                $columns = implode(',', $propertyColumns);
+                
+                // Prepare and execute the property insertion
+                $sql = "INSERT INTO properties ($columns) VALUES ($placeholders)";
+                $paramTypes = 'i' . str_repeat('s', count($propertyValues) - 1); // 'i' for owner_id (integer), 's' for other fields (string)
+                
+                $result = $this->con->prepare($sql, $paramTypes, ...$propertyValues);
+                
+                if (!$result) {
+                    throw new \Exception("Failed to insert property");
+                }
+
+                $propertyId = $this->con->lastID();
+
+                // Link property to admin
+                $linkSql = "INSERT INTO property_landlords (property_id, user_id) VALUES (?, ?)";
+                $linkResult = $this->con->prepare($linkSql, 'ii', $propertyId, $_SESSION['user_id']);
+
+                if (!$linkResult) {
+                    throw new \Exception("Failed to link property to admin");
+                }
+
+                displayMessage("Property added successfully.", "text-emerald-500");
+                header("Refresh: 2, /uzoca/admin/properties", true, 301);
+            } catch (\Exception $e) {
+                // Delete uploaded images
+                foreach ($renamedImages as $image) {
+                    @unlink($uploadFolder . $image);
+                }
+                
+                displayMessage("Failed to add property: " . $e->getMessage(), "text-rose-500");
+            }
         } else {
             displayMessage("Property Details");
         }

@@ -1,4 +1,4 @@
-<?php $pageTitle = "HousingQuest | Settings"; ?>
+<?php $pageTitle = "UZOCA | Settings"; ?>
 <?php require_once("./includes/Header.php"); ?>
 <?php
 

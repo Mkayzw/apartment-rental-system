@@ -2,27 +2,36 @@
 
 namespace app\src;
 
-use app\assets\DB;
-
 class ViewTenants
 {
+    private $conn;
+    private $table = 'tenants';
     private $ownerID;
-    private $con;
 
-    public function __construct()
+    public function __construct($conn)
     {
-        $this->ownerID = $_SESSION['id'];
-        $this->con = DB::getInstance();
+        $this->conn = $conn;
+        $this->ownerID = $_SESSION['user_id'] ?? null;
     }
 
     /**
-     * Showa the list of tenants for a particular property owner
+     * Shows the list of tenants for a particular property owner
      */
     public function showTenants()
     {
-        $tenants = $this->con->select("tenant_name, agreement_date, property_bought, property_id", "tenants", "WHERE landlord = ? ORDER BY id DESC", $this->ownerID);
+        $stmt = $this->conn->prepare(
+            "SELECT t.name, t.id_number, t.move_in_date, t.status, t.booking_code, p.title as property_title 
+             FROM {$this->table} t 
+             JOIN properties p ON t.property_id = p.id 
+             JOIN property_landlords pl ON p.id = pl.property_id 
+             WHERE pl.user_id = ? 
+             ORDER BY t.move_in_date DESC",
+            'i',
+            $this->ownerID
+        );
+        $tenants = $stmt->fetch_all(MYSQLI_ASSOC);
 
-        if ($tenants->num_rows < 1) : ?>
+        if (empty($tenants)) : ?>
             <p class="font-bold">
                 You do not have any tenant(s) yet.
             </p>
@@ -37,34 +46,48 @@ class ViewTenants
                         Tenant's Name
                     </th>
                     <th class="py-4 px-4 border border-slate-600 header">
-                        Agreement Date
+                        Property
                     </th>
                     <th class="py-4 px-4 border border-slate-600 header">
-                        Property Bought
+                        ID Number
                     </th>
                     <th class="py-4 px-4 border border-slate-600 header">
-                        Property ID
+                        Move-in Date
+                    </th>
+                    <th class="py-4 px-4 border border-slate-600 header">
+                        Booking Code
+                    </th>
+                    <th class="py-4 px-4 border border-slate-600 header">
+                        Status
                     </th>
                 </tr>
             </thead>
 
             <tbody>
-                <?php while ($tenant = $tenants->fetch_object()) : ?>
+                <?php foreach ($tenants as $tenant) : ?>
                     <tr class="odd:bg-white even:bg-slate-50 hover:bg-slate-50 dark:odd:bg-slate-700 dark:even:bg-slate-800 dark:hover:bg-slate-800">
                         <td class="py-2 px-4 border border-slate-600">
-                            <?= $tenant->tenant_name ?>
+                            <?= htmlspecialchars($tenant['name']) ?>
                         </td>
                         <td class="py-2 px-4 border border-slate-600">
-                            <?= $tenant->agreement_date ?>
+                            <?= htmlspecialchars($tenant['property_title']) ?>
                         </td>
                         <td class="py-2 px-4 border border-slate-600">
-                            <?= $tenant->property_bought ?>
+                            <?= htmlspecialchars($tenant['id_number']) ?>
                         </td>
                         <td class="py-2 px-4 border border-slate-600">
-                            <?= $tenant->property_id ?>
+                            <?= date('M d, Y', strtotime($tenant['move_in_date'])) ?>
+                        </td>
+                        <td class="py-2 px-4 border border-slate-600">
+                            <?= htmlspecialchars($tenant['booking_code']) ?>
+                        </td>
+                        <td class="py-2 px-4 border border-slate-600">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full <?= $tenant['status'] === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
+                                <?= ucfirst($tenant['status']) ?>
+                            </span>
                         </td>
                     </tr>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
             </tbody>
         </table>
 <?php

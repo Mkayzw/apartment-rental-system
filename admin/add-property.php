@@ -1,4 +1,4 @@
-<?php $pageTitle = "HousingQuest | Add Property"; ?>
+<?php $pageTitle = "UZOCA | Add Property"; ?>
 <?php require_once("./includes/Header.php"); ?>
 <?php
 
@@ -29,98 +29,95 @@ $addProperty = new AddProperty();
 </div>
 
 <form class="grid gap-8" method="POST" enctype="multipart/form-data">
-    <label class="h-[200px] sm:h-[400px] cursor-pointer rounded-xl relative" for="pic-1">
-        <div class="grid gap-2 place-content-center justify-center text-center bg-white shadow-sm dark:shadow-none dark:text-slate-900 dark:bg-violet-100 h-full rounded-xl p-3">
-            <i class="fr fi-rr-picture"></i>
-            <p>
-                Browse or drop images
-            </p>
+    <div class="grid gap-4">
+        <label class="h-[150px] sm:h-[200px] md:h-[300px] lg:h-[400px] cursor-pointer rounded-xl relative" for="pic-1">
+            <div class="grid gap-2 place-content-center justify-center text-center bg-white shadow-sm dark:shadow-none dark:text-slate-900 dark:bg-violet-100 h-full rounded-xl p-3">
+                <i class="fr fi-rr-picture"></i>
+                <p>
+                    Browse or drop images
+                </p>
+            </div>
+
+            <span class="sr-only">Choose profile photo</span>
+            <input type="file" class="h-full cursor-pointer opacity-0 absolute top-0 left-0 w-full rounded-xl z-50 image-selector" required id="pic-1" name="pic-1">
+
+            <img class="rounded-xl absolute top-0 left-0 w-full h-full not-sr-only opacity-0" src="" alt="" />
+        </label>
+
+        <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            <label class="h-[150px] sm:h-[200px] md:h-[250px] lg:h-[300px] cursor-pointer rounded-xl relative" for="pic-2">
+                <div class="grid gap-2 place-content-center justify-center text-center bg-white shadow-sm dark:shadow-none dark:text-slate-900 dark:bg-violet-100 h-full rounded-xl p-3">
+                    <i class="fr fi-rr-picture"></i>
+                    <p>
+                        Browse or drop images
+                    </p>
+                </div>
+
+                <span class="sr-only">Choose profile photo</span>
+                <input type="file" class="h-full cursor-pointer opacity-0 absolute top-0 left-0 w-full rounded-xl z-50 image-selector" id="pic-2" required name="pic-2">
+
+                <img class="rounded-xl absolute top-0 left-0 w-full h-full not-sr-only opacity-0" src="" alt="" />
+            </label>
+
+            <label class="h-[150px] sm:h-[200px] md:h-[250px] lg:h-[300px] cursor-pointer rounded-xl relative" for="pic-3">
+                <div class="grid gap-2 place-content-center justify-center text-center bg-white shadow-sm dark:shadow-none dark:text-slate-900 dark:bg-violet-100 h-full rounded-xl p-3">
+                    <i class="fr fi-rr-picture"></i>
+                    <p>
+                        Browse or drop images
+                    </p>
+                </div>
+
+                <span class="sr-only">Choose profile photo</span>
+                <input type="file" class="h-full cursor-pointer opacity-0 absolute top-0 left-0 w-full rounded-xl image-selector" id="pic-3" required name="pic-3">
+
+                <img class="rounded-xl absolute top-0 left-0 w-full h-full not-sr-only opacity-0" src="" alt="" />
+            </label>
+
+            <label class="h-[150px] sm:h-[200px] md:h-[250px] lg:h-[300px] cursor-pointer rounded-xl relative" for="pic-4">
+                <div class="grid gap-2 place-content-center justify-center text-center bg-white shadow-sm dark:shadow-none dark:text-slate-900 dark:bg-violet-100 h-full rounded-xl p-3">
+                    <i class="fr fi-rr-picture"></i>
+                    <p>
+                        Browse or drop images
+                    </p>
+                </div>
+
+                <span class="sr-only">Choose profile photo</span>
+                <input type="file" class="h-full cursor-pointer opacity-0 absolute top-0 left-0 w-full rounded-xl image-selector" id="pic-4" required name="pic-4">
+
+                <img class="rounded-xl absolute top-0 left-0 w-full h-full not-sr-only opacity-0" src="" alt="" />
+            </label>
+
+            <label class="h-[150px] sm:h-[200px] md:h-[250px] lg:h-[300px] cursor-pointer rounded-xl relative" for="pic-5">
+                <div class="grid gap-2 place-content-center justify-center text-center bg-white shadow-sm dark:shadow-none dark:text-slate-900 dark:bg-violet-100 h-full rounded-xl p-3">
+                    <i class="fr fi-rr-picture"></i>
+                    <p>
+                        Browse or drop images
+                    </p>
+                </div>
+
+                <span class="sr-only">Choose profile photo</span>
+                <input type="file" class="h-full cursor-pointer opacity-0 absolute top-0 left-0 w-full rounded-xl image-selector" id="pic-5" required name="pic-5">
+
+                <img class="rounded-xl absolute top-0 left-0 w-full h-full not-sr-only opacity-0" src="" alt="" />
+            </label>
+
+            <label class="h-[150px] sm:h-[200px] md:h-[250px] lg:h-[300px] cursor-pointer rounded-xl relative" for="pic-6">
+                <div class="grid gap-2 place-content-center justify-center text-center bg-white shadow-sm dark:shadow-none dark:text-slate-900 dark:bg-violet-100 h-full rounded-xl p-3">
+                    <i class="fr fi-rr-picture"></i>
+                    <p>
+                        Browse or drop images
+                    </p>
+                </div>
+
+                <span class="sr-only">Choose profile photo</span>
+                <input type="file" class="h-full cursor-pointer opacity-0 absolute top-0 left-0 w-full rounded-xl image-selector" id="pic-6" required name="pic-6">
+
+                <img class="rounded-xl absolute top-0 left-0 w-full h-full not-sr-only opacity-0" src="" alt="" />
+            </label>
         </div>
-
-        <span class="sr-only">Choose profile photo</span>
-        <input type="file" class="h-full cursor-pointer opacity-0 absolute top-0 left-0 w-full rounded-xl z-50 image-selector" required id="pic-1" name="pic-1">
-
-        <img class="rounded-xl absolute top-0 left-0 w-full h-full not-sr-only opacity-0" src="" alt="" />
-    </label>
-
-    <div class="grid gap-4 lg:grid-rows-4 grid-cols-12">
-
-        <label class="h-[200px] sm:row-start-1 sm:row-end-5 sm:col-span-6 col-span-12 cursor-pointer rounded-xl relative sm:h-full" for="pic-2">
-            <div class="grid gap-2 place-content-center justify-center text-center bg-white shadow-sm dark:shadow-none dark:text-slate-900 dark:bg-violet-100 h-full rounded-xl p-3">
-                <i class="fr fi-rr-picture"></i>
-                <p>
-                    Browse or drop images
-                </p>
-            </div>
-
-            <span class="sr-only">Choose profile photo</span>
-            <input type="file" class="h-full cursor-pointer opacity-0 absolute top-0 left-0 w-full rounded-xl z-50 image-selector" id="pic-2" required name="pic-2">
-
-            <img class="rounded-xl absolute top-0 left-0 w-full h-full not-sr-only opacity-0" src="" alt="" />
-        </label>
-
-        <label class="h-[200px] col-span-12 sm:row-span-2 sm:col-span-6 md:col-span-3 cursor-pointer rounded-xl relative" for="pic-3">
-            <div class="grid gap-2 place-content-center justify-center text-center bg-white shadow-sm dark:shadow-none dark:text-slate-900 dark:bg-violet-100 h-full rounded-xl p-3">
-                <i class="fr fi-rr-picture"></i>
-                <p>
-                    Browse or drop images
-                </p>
-            </div>
-
-            <span class="sr-only">Choose profile photo</span>
-            <input type="file" class="h-full cursor-pointer opacity-0 absolute top-0 left-0 w-full rounded-xl image-selector
-                            " id="pic-3" required name="pic-3">
-
-            <img class="rounded-xl absolute top-0 left-0 w-full h-full not-sr-only opacity-0" src="" alt="" />
-        </label>
-
-        <label class="h-[200px] col-span-12 sm:row-span-2 sm:col-span-6 md:col-span-3 cursor-pointer rounded-xl relative" for="pic-4">
-            <div class="grid gap-2 place-content-center justify-center text-center bg-white shadow-sm dark:shadow-none dark:text-slate-900 dark:bg-violet-100 h-full rounded-xl p-3">
-                <i class="fr fi-rr-picture"></i>
-                <p>
-                    Browse or drop images
-                </p>
-            </div>
-
-            <span class="sr-only">Choose profile photo</span>
-            <input type="file" class="h-full cursor-pointer opacity-0 absolute top-0 left-0 w-full rounded-xl image-selector
-                            " id="pic-4" required name="pic-4">
-
-            <img class="rounded-xl absolute top-0 left-0 w-full h-full not-sr-only opacity-0" src="" alt="" />
-        </label>
-
-        <label class="h-[200px] col-span-12 sm:row-span-2 sm:col-span-6 md:col-span-3 cursor-pointer rounded-xl relative" for="pic-5">
-            <div class="grid gap-2 place-content-center justify-center text-center bg-white shadow-sm dark:shadow-none dark:text-slate-900 dark:bg-violet-100 h-full rounded-xl p-3">
-                <i class="fr fi-rr-picture"></i>
-                <p>
-                    Browse or drop images
-                </p>
-            </div>
-
-            <span class="sr-only">Choose profile photo</span>
-            <input type="file" class="h-full cursor-pointer opacity-0 absolute top-0 left-0 w-full rounded-xl image-selector
-                            " id="pic-5" required name="pic-5">
-
-            <img class="rounded-xl absolute top-0 left-0 w-full h-full not-sr-only opacity-0" src="" alt="" />
-        </label>
-
-        <label class="h-[200px] col-span-12 sm:row-span-2 sm:col-span-6 md:col-span-3 cursor-pointer rounded-xl relative" for="pic-6">
-            <div class="grid gap-2 place-content-center justify-center text-center bg-white shadow-sm dark:shadow-none dark:text-slate-900 dark:bg-violet-100 h-full rounded-xl p-3">
-                <i class="fr fi-rr-picture"></i>
-                <p>
-                    Browse or drop images
-                </p>
-            </div>
-
-            <span class="sr-only">Choose profile photo</span>
-            <input type="file" class="h-full cursor-pointer opacity-0 absolute top-0 left-0 w-full rounded-xl image-selector
-                            " id="pic-6" required name="pic-6">
-
-            <img class="rounded-xl absolute top-0 left-0 w-full h-full not-sr-only opacity-0" src="" alt="" />
-        </label>
     </div>
 
-    <div class="grid gap-4 lg:w-4/5 lg:mx-auto lg:gap-8 mt-8">
+    <div class="grid gap-4 lg:w-4/5 lg:mx-auto lg:gap-8">
         <h3 class="header text-xl">
             <?php $addProperty->addNewProperty(); ?>
         </h3>
@@ -190,4 +187,5 @@ $addProperty = new AddProperty();
     createEditor('property-description');
     createEditor('property-summary');
 </script>
+
 <?php require_once("./includes/Footer.php"); ?>

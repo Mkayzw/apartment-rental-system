@@ -38,14 +38,14 @@ class AdminViewProperty
 
         // Check if the required GET properties are set
         if (is_empty($this->propertyID) || is_empty($this->propertyName)) {
-            header("Location: /404", true, 301);
+            header("Location: /uzoca/404", true, 301);
         }
 
-        $getHouse = $this->con->select("id, index_img, img_1, img_2, img_3, img_4, img_5, title, price, description, location, type, owner_id, summary", "properties", "WHERE id = ? AND link = ? AND owner_id = ?", ...[$this->propertyID, $this->propertyName, $this->ownerID]);
+        $getHouse = $this->con->select("id, index_img, img_1, img_2, img_3, img_4, img_5, title, price, description, location, type, summary", "properties JOIN property_landlords ON properties.id = property_landlords.property_id", "WHERE properties.id = ? AND link = ? AND property_landlords.user_id = ?", ...[$this->propertyID, $this->propertyName, $this->ownerID]);
 
         // Check if there is any available apartment
         if ($getHouse->num_rows < 1) {
-            header("Location: /admin/properties", true, 301);
+            header("Location: /uzoca/admin/properties", true, 301);
         }
 
         while ($house = $getHouse->fetch_object()) : ?>
@@ -109,8 +109,8 @@ class AdminViewProperty
     public function deleteProperty()
     {
         if (isset($_POST['delete-property'])) {
-            $sql = "DELETE FROM properties WHERE id = ? AND link = ? AND owner_id = ?";
-            $paramTypes = "sss";
+            $sql = "DELETE p FROM properties p JOIN property_landlords pl ON p.id = pl.property_id WHERE p.id = ? AND p.link = ? AND pl.user_id = ?";
+            $paramTypes = "sis";
             $values = [
                 $this->propertyID,
                 $this->propertyName,
@@ -119,7 +119,7 @@ class AdminViewProperty
 
             $this->con->prepare($sql, $paramTypes, ...$values);
 
-            header("Location: /admin/properties", true, 301);
+            header("Location: /uzoca/admin/properties", true, 301);
         }
     }
 }

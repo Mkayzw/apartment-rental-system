@@ -1,4 +1,4 @@
-<?php require_once("./includes/Header.php"); ?>
+<?php require_once(__DIR__ . "/../../includes/Header.php"); ?>
 <?php
 
 use app\src\Index;
@@ -9,7 +9,7 @@ $indexHouses = new Index();
 <div class="min-h-[60vh] lg:min-h-[70vh] grid place-content-center text-center bg-index-banner p-4 bg-fixed bg-center bg-cover text-slate-200">
     <div class="space-y-2.5 md:w-3/4 lg:w-3/5 md:mx-auto">
         <h1 class="header text-3xl">
-            HousingQuest &mdash; Taking the pain out of seeking accommodation
+            UZOCA &mdash; Taking the pain out of seeking accommodation
         </h1>
         <p>
             A smart and easy way to sell and rent properties
@@ -28,7 +28,7 @@ $indexHouses = new Index();
             </p>
 
             <p class="mt-2">
-                <a class="text-sky-500 hover:underline underline-offset-4 hover:text-sky-600" href="">HousingQuest</a> was born out of the desire to make selling and renting of properties stress-free and convenient. It takes away the pain of going through third parties who sometimes extort propective buyers. With <a class="text-sky-500 hover:underline underline-offset-4 hover:text-sky-600" href="">HousingQuest</a> this process is simplified to just 3 easy steps:
+                <a class="text-sky-500 hover:underline underline-offset-4 hover:text-sky-600" href="">Uzoca</a> was born out of the desire to make selling and renting of properties stress-free and convenient. It takes away the pain of going through third parties who sometimes extort propective buyers. With <a class="text-sky-500 hover:underline underline-offset-4 hover:text-sky-600" href="">Uzoca</a> this process is simplified to just 3 easy steps:
             </p>
         </div>
 
@@ -93,7 +93,7 @@ $indexHouses = new Index();
             </p>
 
             <p class="mt-2">
-                At <a class="text-sky-500 hover:underline underline-offset-4 hover:text-sky-600" href="">HousingQuest</a>, we provide a wide variety of properties to match your need. This, and many more from the comfort of your
+                At <a class="text-sky-500 hover:underline underline-offset-4 hover:text-sky-600" href="">Uzoca</a>, we provide a wide variety of properties to match your need. This, and many more from the comfort of your
                 home.
             </p>
         </div>
@@ -105,7 +105,7 @@ $indexHouses = new Index();
         </section>
 
         <p class="grid place-content-center">
-            <a class="rounded-lg py-1.5 px-4 bg-sky-500 text-white hover:bg-sky-600 border border-sky-500 hover:ring-1 hover:ring-sky-500 ring-offset-2 active:ring-1 active:ring-sky-500 dark:ring-offset-slate-800" href="/properties">
+            <a class="rounded-lg py-1.5 px-4 bg-sky-500 text-white hover:bg-sky-600 border border-sky-500 hover:ring-1 hover:ring-sky-500 ring-offset-2 active:ring-1 active:ring-sky-500 dark:ring-offset-slate-800" href="/uzoca/properties">
                 Explore more properties
             </a>
         </p>

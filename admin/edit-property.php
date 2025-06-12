@@ -1,4 +1,4 @@
-<?php $pageTitle = "HousingQuest | Edit Property"; ?>
+<?php $pageTitle = "UZOCA | Edit Property"; ?>
 <?php require_once("./includes/Header.php"); ?>
 <?php
 
@@ -7,7 +7,7 @@ use app\src\EditProperty;
 $house = new EditProperty();
 ?>
 
-<a class="text-sky-500 hover:text-sky-600 focus:text-sky-600 dark:text-sky-600 dark:hover:text-sky-700" href="/admin/properties">
+<a class="text-sky-500 hover:text-sky-600 focus:text-sky-600 dark:text-sky-600 dark:hover:text-sky-700" href="/uzoca/admin/properties">
     <i class="fr fi-rr-arrow-small-left"></i>
     Go back
 </a>

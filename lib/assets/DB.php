@@ -13,17 +13,42 @@ class DB {
         try {
             $this->con = new \mysqli(
                 Config::get('mysql/server'),
-                Config::get('mysql/host'),
+                Config::get('mysql/username'),
                 Config::get('mysql/password'),
                 Config::get('mysql/dbName')
             );
 
-            return $this->con;
+            if ($this->con->connect_error) {
+                throw new \Exception("Connection failed: " . $this->con->connect_error);
+            }
         } catch (\Exception $e) {
-            $e->getMessage();
+            die("Database connection failed: " . $e->getMessage());
         }
     }
 
+    /**
+     * Begin a new transaction
+     * @return bool
+     */
+    public function beginTransaction() {
+        return $this->con->begin_transaction();
+    }
+
+    /**
+     * Commit the current transaction
+     * @return bool
+     */
+    public function commit() {
+        return $this->con->commit();
+    }
+
+    /**
+     * Rollback the current transaction
+     * @return bool
+     */
+    public function rollback() {
+        return $this->con->rollback();
+    }
 
     /**
      * Get's the ID of the last created or updated row
@@ -44,7 +69,6 @@ class DB {
 
         return self::$instance;
     }
-
 
     /**
      * Performs an SQL prepared statement
@@ -68,17 +92,15 @@ class DB {
         return $result;
     }
 
-
     /**
      * Performs a raw SQL query
      * @param string $sql
      * @return object|bool $stmt
      */
-    public function query(string $sql) : object {
+    public function query(string $sql) : object|bool {
         $stmt = $this->con->query($sql);
         return $stmt;
     }
-
 
     /**
      * Creates a new resource
@@ -87,7 +109,7 @@ class DB {
      * @param array $columns
      * @param mixed ...$paramValues
      *
-     * @return void $stmt
+     * @return int|bool Returns the last insert ID on success, false on failure
      */
     public function insert(
         string $table,
@@ -101,9 +123,8 @@ class DB {
         $sql    =   "INSERT INTO `{$table}` ({$setColumn}) VALUES ({$placeholders})";
         $stmt   =   $this->prepare($sql, $paramType, ...$paramValues);
 
-        return $stmt;
+        return $stmt ? $this->lastID() : false;
     }
-
 
     /**
      * Selects a particular resource or all resources
@@ -121,7 +142,7 @@ class DB {
         string $conditions = null,
         ...$params
     ) {
-        $sql = "SELECT {$row} FROM  `{$table}`";
+        $sql = "SELECT {$row} FROM {$table}";
 
         if ($conditions) {
             $types  =   substr_count($conditions, '?');
@@ -141,8 +162,6 @@ class DB {
             return $stmt;
         }
     }
-
-
 
     /**
      * Updates a resource
@@ -170,7 +189,6 @@ class DB {
         $stmt = $this->prepare($sql, $paramType, ...$paramValues);
         return $stmt;
     }
-
 
     /**
      * Deletes a resource

@@ -39,7 +39,7 @@ $resetPassword = new ForgotPassword();
 
         <p class="mt-4">
             Don't have an account yet?
-            <a class="text-sky-500 hover:text-sky-600 focus:text-sky-600 hover:underline hover:underline-offset-4 active:underline active:underline-offset-4" href="/registration">
+            <a class="text-sky-500 hover:text-sky-600 focus:text-sky-600 hover:underline hover:underline-offset-4 active:underline active:underline-offset-4" href="/uzoca/registration">
                 Create one
             </a>
         </p>
