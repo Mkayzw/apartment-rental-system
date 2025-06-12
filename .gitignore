@@ -1,24 +1,46 @@
-/node_modules
-/.pnp
-.pnp.js
-/.yarn/install-state.gz
-/.yarn/unplugged
+# Composer dependencies
+/vendor/
 
-# testing
-/coverage
+# Laravel or Symfony cache and logs
+/storage/
+bootstrap/cache/
+var/
+*.log
 
-# misc
+# Environment files
+.env
+.env.*.local
+.env.local
+.env.production
+
+# IDEs and OS files
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
 .DS_Store
-*.pem
+Thumbs.db
 
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
+# PHPUnit
+phpunit.xml
+phpunit.result.cache
 
-# local env files
-.env*.local
+# Build and cache
+node_modules/
+npm-debug.log
+yarn-error.log
+.cache/
+dist/
 
-# vercel
-.vercel
+# Composer backup
+composer.lock
+composer.phar
+
+# Misc
+*.bak
+*.tmp
+*.swp
+*.sql
+*.sqlite
+*.tar
+*.zip
