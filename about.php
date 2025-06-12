@@ -2,7 +2,7 @@
 require_once('./vendor' . DIRECTORY_SEPARATOR . 'autoload.php');
 
 // Set the page title
-$pageTitle = "UZOCA | Contact Us";
+$pageTitle = "UZOCA | About Us";
 
 // Render the view
-view("contact", ["title" => $pageTitle]);
+view("about", ["title" => $pageTitle]); 

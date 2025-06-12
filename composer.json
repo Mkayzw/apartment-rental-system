@@ -5,6 +5,12 @@
         },
         "files": [
             "lib/functions.php"
+        ],
+        "classmap": [
+            "lib/src/"
         ]
+    },
+    "require": {
+        "google/apiclient": "2.15.0"
     }
 }
